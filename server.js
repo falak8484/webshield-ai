@@ -7,7 +7,7 @@ const { runScan } = require('./src/scanner');
 const { startLocalProject, stopAllLocalServers, detectProjectType } = require('./src/localProjectServer');
 
 const app  = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
