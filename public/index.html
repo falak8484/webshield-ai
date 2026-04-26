@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebShield AI — Security & Testing Scanner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🛡️</span>
+        <span class="logo-text">WebShield <em>AI</em></span>
+      </div>
+      <p class="tagline">Automated security scanning & website health testing</p>
+    </div>
+  </header>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <main class="main">
+
+    <!-- Scan Input Panel -->
+    <section class="scan-panel" id="scanPanel">
+      <div class="scan-panel-inner">
+        <h1 class="scan-title">Analyze Any Website</h1>
+        <p class="scan-subtitle">Scan a live URL or an already-running localhost app by port</p>
+
+        <!-- Mode Tabs -->
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="url"    onclick="switchMode('url', this)">🌐 Live URL</button>
+          <button class="mode-tab"        data-mode="localhost" onclick="switchMode('localhost', this)">⚡ Localhost Port</button>
+        </div>
+
+        <!-- ── Mode: URL ── -->
+        <div class="mode-panel" id="mode-url">
+          <div class="input-row">
+            <div class="url-input-wrap">
+              <span class="input-prefix">🌐</span>
+              <input type="text" id="urlInput" class="url-input"
+                placeholder="https://example.com" autocomplete="off" spellcheck="false" />
+            </div>
+            <button class="scan-btn" id="scanBtnUrl" onclick="startScan('url')">
+              <span>Scan</span><span>→</span>
+            </button>
+          </div>
+          <div class="quick-links">
+            Try:
+            <button class="quick-link" onclick="setUrl('https://example.com')">example.com</button>
+            <button class="quick-link" onclick="setUrl('https://httpbin.org')">httpbin.org</button>
+            <button class="quick-link" onclick="setUrl('http://neverssl.com')">neverssl.com (HTTP)</button>
+          </div>
+        </div>
+
+        <!-- ── Mode: Localhost Port ── -->
+        <div class="mode-panel hidden" id="mode-localhost">
+          <div class="path-info-box">
+            💡 Start your project normally first using <strong>npm run dev</strong> or <strong>npm start</strong>. Then enter only the port number here. WebShield will scan <strong>http://localhost:PORT</strong> directly with Playwright.
+          </div>
+          <div class="input-row">
+            <div class="url-input-wrap">
+              <span class="input-prefix">⚡</span>
+              <input type="number" id="portInput" class="url-input"
+                placeholder="5173" min="1" max="65535"
+                autocomplete="off" spellcheck="false" />
+            </div>
+            <button class="scan-btn" id="scanBtnLocalhost" onclick="startScan('localhost')">
+              <span>Scan Port</span><span>→</span>
+            </button>
+          </div>
+          <div class="input-row route-row">
+            <div class="url-input-wrap">
+              <span class="input-prefix">/</span>
+              <input type="text" id="routeInput" class="url-input"
+                placeholder="optional route, example: /dashboard"
+                autocomplete="off" spellcheck="false" />
+            </div>
+          </div>
+          <div class="path-examples">
+            <span class="path-ex-label">Common ports:</span>
+            <button class="quick-link" onclick="setPort('5173')">Vite 5173</button>
+            <button class="quick-link" onclick="setPort('3000')">React/Next 3000</button>
+            <button class="quick-link" onclick="setPort('8080')">Vue 8080</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress Section (hidden until scan starts) -->
+    <section class="progress-section hidden" id="progressSection">
+      <div class="progress-card">
+        <div class="progress-header">
+          <div class="scanning-pulse"></div>
+          <span class="progress-label" id="progressLabel">Initializing scan...</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-steps" id="progressSteps">
+          <div class="step step-active" data-step="1">
+            <span class="step-dot"></span>
+            <span>Browser automation</span>
+          </div>
+          <div class="step" data-step="2">
+            <span class="step-dot"></span>
+            <span>Security analysis</span>
+          </div>
+          <div class="step" data-step="3">
+            <span class="step-dot"></span>
+            <span>Performance audit</span>
+          </div>
+          <div class="step" data-step="4">
+            <span class="step-dot"></span>
+            <span>Building report</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Results Section (hidden until scan completes) -->
+    <section class="results-section hidden" id="resultsSection">
+
+      <!-- Score Hero -->
+      <div class="score-hero" id="scoreHero">
+        <div class="score-circle-wrap">
+          <svg class="score-ring" viewBox="0 0 120 120">
+            <circle class="score-ring-bg" cx="60" cy="60" r="52" />
+            <circle class="score-ring-fill" cx="60" cy="60" r="52" id="scoreRingFill" />
+          </svg>
+          <div class="score-center">
+            <span class="score-number" id="scoreNumber">--</span>
+            <span class="score-label">/ 100</span>
+          </div>
+        </div>
+        <div class="score-meta">
+          <div class="score-verdict" id="scoreVerdict"></div>
+          <div class="scan-meta-info" id="scanMetaInfo"></div>
+          <button class="new-scan-btn" id="newScanBtn">← New Scan</button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-row" id="statsRow"></div>
+
+      <!-- Screenshot -->
+      <div class="screenshot-wrap hidden" id="screenshotWrap">
+        <h3 class="section-title">📸 Page Screenshot</h3>
+        <img class="screenshot-img" id="screenshotImg" alt="Page screenshot" />
+      </div>
+
+      <!-- Issues Grid -->
+      <div class="issues-section" id="issuesSection">
+        <h3 class="section-title">🔍 Issues Found</h3>
+        <div class="issues-filters" id="issuesFilters"></div>
+        <div class="issues-grid" id="issuesGrid"></div>
+      </div>
+
+      <!-- Performance Section -->
+      <div class="perf-section" id="perfSection">
+        <h3 class="section-title">⚡ Performance Scores (Lighthouse)</h3>
+        <div class="perf-grid" id="perfGrid"></div>
+        <div class="perf-metrics" id="perfMetrics"></div>
+      </div>
+
+    </section>
+
+    <!-- Error Section -->
+    <section class="error-section hidden" id="errorSection">
+      <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h3 class="error-title">Scan Failed</h3>
+        <p class="error-msg" id="errorMsg"></p>
+        <button class="new-scan-btn" onclick="resetToInput()">Try Again</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <p>WebShield AI — Built with Playwright, Lighthouse & Node.js</p>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
